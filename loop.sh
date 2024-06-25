@@ -10,13 +10,23 @@ die() {
     exit 1
 }
 
-# Trap to exit on interrupt signal
 trap "exit" INT
+
+log_timestamp() {
+    # Log time to file
+    date >> timestamps.txt
+
+    # Calculate the time elapsed
+    END=$(date +%s)
+    ELAPSED=$((END-START))
+
+    echo "Elapsed time: $ELAPSED seconds " > elapsed.txt
+}
 
 # Default values
 TIMEOUT=0
-FLATPAK=0
-DELAY=3
+FLATPAK=""
+DELAY=5
 COMMAND=""
 ARGS=""
 SELF=$$
@@ -28,12 +38,14 @@ while :; do
         -h | -\? | --help)
             echo "Usage: $0 [options]"
             echo "Options:"
-            echo "  -t, --timeout <seconds>    Set a timeout for the command execution."
-            echo "  -l, --livi <args>          Run the livi command with specified arguments."
-            echo "  --flatpak                  Run the command using flatpak."
-            echo "  -c, --command <command>    Run the specified command."
-            echo "  -a, --args <args>          Arguments for the command."
-            echo "  -h, --help                 Show this help message."
+            echo "  -h, --help           Display this help message."
+            echo "  -t, --timeout        Timeout for the command in seconds. Default: 0 (no timeout)."
+            echo "  -d, --delay          Delay between command executions in seconds. Default: 5."
+            echo "                          If timeout is 0, this is the time between checks."
+            echo "  --flatpak            Flatpak application string. Default: none."
+            echo "                          Requires also setting command with program name."
+            echo "  -c, --command        Command to run."
+            echo "  -a, --args           Arguments for the command."
             exit 0
             ;;
         -t | --timeout)
@@ -43,16 +55,12 @@ while :; do
             fi
             shift
             ;;
-        -l | --livi)
-            COMMAND="livi"
-            ARGS="${2-}"
-            if [[ -z "$ARGS" ]]; then
+        --flatpak)
+            FLATPAK="${2-}"
+            if [[ -z "$FLATPAK" ]]; then
                 die "ERROR: $1 requires a non-empty option argument."
             fi
             shift
-            ;;
-        --flatpak)
-            FLATPAK=1
             ;;
         -c | --command)
             COMMAND="${2-}"
@@ -64,6 +72,13 @@ while :; do
         -a | --args)
             ARGS="${2-}"
             if [[ -z "$ARGS" ]]; then
+                die "ERROR: $1 requires a non-empty option argument."
+            fi
+            shift
+            ;;
+        -d | --delay)
+            DELAY="${2-}"
+            if [[ -z "$DELAY" ]]; then
                 die "ERROR: $1 requires a non-empty option argument."
             fi
             shift
@@ -91,18 +106,16 @@ fi
 date > timestamps.txt
 
 while true; do
-    if [ "$FLATPAK" -eq 1 ]
+    if [ -n "$FLATPAK" ]
     then
-        if [ "$COMMAND" == "livi" ]
-        then
-            flatpak run --user org.sigxcpu.Livi $ARGS &
-        fi
+        flatpak run --user "$FLATPAK" $ARGS &
     else
         $COMMAND $ARGS &
     fi
 
     while true; do
-        PID=$(pgrep -f "$COMMAND $ARGS")
+        # Get the PID of the command, do not fail if the command is not found
+        PID=$(pgrep -f "$COMMAND $ARGS" || true)
         # Remove the PID of the script itself
         PID=$(echo $PID | sed "s/$SELF//")
 
@@ -117,37 +130,40 @@ while true; do
 
     if [ "$TIMEOUT" -eq 0 ]
     then
-        # Wait for the command to finish
-        wait $PID
+        # Check if the command is still running
+        while true
+        do
+            # If the PID is empty, break the loop
+            if ! ps -p $PID > /dev/null
+            then
+                break
+            fi
+        
+            log_timestamp
+
+            sleep "$DELAY"
+        done
     else
         # let the command finish unless the timeout is reached
         for (( i=0; i<"$TIMEOUT"; i++ ))
         do
-            if [ "$FLATPAK" -eq 0 ]
+            if ! ps -p $PID > /dev/null
             then
-                if ! ps -p $PID > /dev/null
-                then
-                    break
-                fi
+                break
             fi
 
             sleep 1
         done
 
         # Kill PID if it is still running
+        echo "Killing PID: $PID"
         kill $PID || true
     fi
 
-    # Log time to file
-    date >> timestamps.txt
-
-    # Calculate the time elapsed
-    END=$(date +%s)
-    ELAPSED=$((END-START))
-
-    echo "Elapsed time: $ELAPSED seconds " > elapsed.txt
+    # Log the timestamp
+    log_timestamp
 
     # Wait for the delay
-    sleep $DELAY
+    sleep "$DELAY"
     
 done
