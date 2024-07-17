@@ -14,13 +14,13 @@ trap "exit" INT
 
 log_timestamp() {
     # Log time to file
-    date >> timestamps.txt
+    date >> "${COMMAND}_timestamps.txt"
 
     # Calculate the time elapsed
     END=$(date +%s)
     ELAPSED=$((END-START))
 
-    echo "Elapsed time: $ELAPSED seconds " > elapsed.txt
+    echo "Elapsed time: $ELAPSED seconds " > "${COMMAND}_elapsed.txt"
 }
 
 # Default values
@@ -99,11 +99,11 @@ done
 
 # Ensure a command is set
 if [[ -z "$COMMAND" ]]; then
-    die "ERROR: No command specified. Use -l or another command option."
+    die "ERROR: No command specified. Use -c to set a command."
 fi
 
 # Initial timestamp to file
-date > timestamps.txt
+date > "${COMMAND}_timestamps.txt"
 
 while true; do
     if [ -n "$FLATPAK" ]
@@ -138,7 +138,7 @@ while true; do
             then
                 break
             fi
-        
+
             log_timestamp
 
             sleep "$DELAY"
@@ -165,5 +165,5 @@ while true; do
 
     # Wait for the delay
     sleep "$DELAY"
-    
+
 done
