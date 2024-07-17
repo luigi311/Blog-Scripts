@@ -6,24 +6,24 @@ Runs a command in a constant loop and logs the timestamp to elapsed.txt and time
 
 ### Livi
     
-    ```bash
-    DISPLAY=:0 ./loop.sh --command "livi" --flatpak "org.sigxcpu.Livi" --args "VIDEO.MKV" --delay 5 --timeout 30
-    ```
+```bash
+DISPLAY=:0 ./loop.sh --command "livi" --flatpak "org.sigxcpu.Livi" --args "Videos/Short_720p.mkv" --delay 5 --timeout 30
+```
 
 ### MPV
 
-    ```bash
-    DISPLAY=:0 ./loop.sh --command "mpv" --args "VIDEO.MKV" --delay 5 --timeout 30
-    ```
+```bash
+DISPLAY=:0 ./loop.sh --command "mpv" --args "~/Videos/Short_720p.mkv" --delay 5 --timeout 30
+```
 
 ### Screen time
     
-    ```bash
-    ./loop.sh --command "sleep" --args "60"" --delay 5 --timeout 50
-    ```
+```bash
+./loop.sh --command "sleep" --args "60" --delay 5 --timeout 50
+```
 
 ### Stress
 
-    ```bash
-    ./loop.sh --command "stress" --args "-c 4" --delay 60 --timeout 0
-    ```
+```bash
+./loop.sh --command "stress" --args "-c 4" --delay 60 --timeout 0
+```
