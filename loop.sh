@@ -12,25 +12,27 @@ die() {
 
 trap "exit" INT
 
-log_timestamp() {
-    # Log time to file
-    date >> "${COMMAND}_timestamps.txt"
-
-    # Calculate the time elapsed
-    END=$(date +%s)
-    ELAPSED=$((END-START))
-
-    echo "Elapsed time: $ELAPSED seconds " > "${COMMAND}_elapsed.txt"
-}
-
 # Default values
 TIMEOUT=0
 FLATPAK=""
 DELAY=5
 COMMAND=""
 ARGS=""
+NAME=""
 SELF=$$
 START=$(date +%s)
+
+# log_prefix will default to COMMAND, unless NAME is specified
+log_timestamp() {
+    # Log time to file
+    date >> "${LOG_PREFIX}_timestamps.txt"
+
+    # Calculate the time elapsed
+    END=$(date +%s)
+    ELAPSED=$((END-START))
+
+    echo "Elapsed time: $ELAPSED seconds " > "${LOG_PREFIX}_elapsed.txt"
+}
 
 # Parse command-line options
 while :; do
@@ -46,6 +48,7 @@ while :; do
             echo "                          Requires also setting command with program name."
             echo "  -c, --command        Command to run."
             echo "  -a, --args           Arguments for the command."
+            echo "  -n, --name           Optional name prefix for log files. Default: uses COMMAND."
             exit 0
             ;;
         -t | --timeout)
@@ -83,6 +86,13 @@ while :; do
             fi
             shift
             ;;
+        -n | --name)
+            NAME="${2-}"
+            if [[ -z "$NAME" ]]; then
+                die "ERROR: $1 requires a non-empty option argument."
+            fi
+            shift
+            ;;
         --)
             shift
             break
@@ -102,8 +112,11 @@ if [[ -z "$COMMAND" ]]; then
     die "ERROR: No command specified. Use -c to set a command."
 fi
 
+# Determine the log prefix; if NAME is set, use that, otherwise use COMMAND
+LOG_PREFIX="${NAME:-$COMMAND}"
+
 # Initial timestamp to file
-date > "${COMMAND}_timestamps.txt"
+date > "${LOG_PREFIX}_timestamps.txt"
 
 while true; do
     if [ -n "$FLATPAK" ]
