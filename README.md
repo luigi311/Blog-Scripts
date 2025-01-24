@@ -22,6 +22,11 @@ DISPLAY=:0 ./loop.sh --command "mpv" --args "~/Videos/Short_720p.mkv" --delay 5 
 ./loop.sh --command "sleep" --args "60" --delay 5 --timeout 50 --name "screen_time"
 ```
 
+### Standby
+```bash
+./loop.sh --command "sleep" --args "1800" --delay 5 --timeout 1790 --name "standby"
+```
+
 ### Stress
 
 ```bash
