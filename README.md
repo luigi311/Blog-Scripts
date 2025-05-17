@@ -38,5 +38,5 @@ WAYLAND_DISPLAY=wayland-0 ./loop.sh --command "mpv" --args "~/Videos/Short_720p.
 While you can loop the video player command, this isnt possible with the firefox video player test so instead we generate a 24 hour long video file from the short videos looped.
 
 ```bash
-ffmpeg -stream_loop 2500 -i Short_1080p.mp4 -c copy Long_1080p.mp4
+ffmpeg -stream_loop 2500 -i Short_720p.mp4 -c copy Long_720p.mp4
 ```
